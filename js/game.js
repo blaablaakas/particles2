@@ -13,9 +13,11 @@ var tempLineSt = {x:0,y:0};
 var lastL = new Date;
 var fps = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 var fpsCounter = 0;
+var id;
 function init(){
 	canvas = document.getElementById("canvas");
 	ctx = canvas.getContext("2d");
+	id = ctx.createImageData(1,1);
 	width=1400;
 	height=900;
 	canvas.width = width;
@@ -30,7 +32,12 @@ function init(){
 	[0,60,60,0], [1340,0,1400,60], [1400,840,1340,900], [60,900,0,840]];
 
 	for(i = 0; i < hcount; i++){
-		head[i] = {x:500, y:500, dir: Math.random()*2*Math.PI};
+		var k = 1.0;
+		if(Math.random() > 0.5)
+			k = -1.0;
+		var xspeed = -speed + Math.random()*(2*speed);
+		var yspeed = k*Math.sqrt(speed*speed - xspeed*xspeed);
+		head[i] = {x:700, y:450, dx: xspeed, dy: yspeed};
 	}
 
 	setInterval(gameloop, 16);
@@ -51,15 +58,28 @@ function gameloop(){
 
 function draw(){
 	//blur effect
-	ctx.globalAlpha = 1;
-	ctx.fillStyle="#c4c4c4";
+	ctx.globalAlpha = 0.1;
+	ctx.fillStyle="#000000";
 	ctx.fillRect(30, 30, width - 60, height - 60);
 	ctx.globalAlpha = 1;
 
 	ctx.fillStyle = "blue";
-	for(i = 0; i < hcount; i++){
+	//ctx.strokeStyle = "#04B431";
+	//ctx.beginPath();
+	//ctx.moveTo(head[0].x, head[0].y);
+	for(i = 1; i < hcount; i++){
 		ctx.fillRect(head[i].x, head[i].y, 2, 2);
+		//id.data[0] = "46";
+		//id.data[1] = 57;
+		//id.data[2] = 204;
+		//id.data[3] = 1;
+		//ctx.putImageData(id, head[i].x, head[i].y);
+		//ctx.lineTo(head[i].x, head[i].y);
+		
 	}
+	//ctx.fillStyle = "rgba("+0+","+60+","+ (30 + 190*Math.random())+","+(0)+")";
+	//ctx.stroke();
+	//ctx.fill();
 
 	//hide collision bugs xD
 	ctx.fillStyle="black";
@@ -100,29 +120,25 @@ function draw(){
 	function calc(){
 		var TmousePos = mousePos;
 		for(i = 0; i < hcount; i++){
+			var h = head[i];
+			var dx = h.dx;
+			var dy = h.dy;
 
-			var dx = Math.sin(head[i].dir)*speed;
-			var dy = Math.cos(head[i].dir)*speed;
-
-			head[i].x += dx;
-			head[i].y -= dy;
+			var x = (h.x += dx);
+			var y = (h.y -= dy);
 
 			if(mdown){
-				var vectToM = [TmousePos.x - head[i].x, TmousePos.y - head[i].y];
+				var vectToM = [TmousePos.x - x, TmousePos.y - y];
 				var dist = (Math.sqrt((vectToM[0])*(vectToM[0]) + (vectToM[1])*(vectToM[1])));
-				var vectToMAngle = Math.acos(-vectToM[1]/dist);
-
-				if(TmousePos.x < head[i].x)
-					vectToMAngle = 2*Math.PI - vectToMAngle;
+				var distDiv = speed/dist;
 
 				if(Math.random() < dist/pullDist){
-					head[i].dir += (vectToMAngle - head[i].dir)/pullStr;
+					h.dx = vectToM[0]*distDiv;
+					h.dy = -vectToM[1]*distDiv;
 				}
 			}
 			//collisions
 			for(j = 0; j < lines.length; j++){
-				var x = head[i].x;
-				var y = head[i].y;
 				if(line_intersects(lines[j][0], lines[j][1], lines[j][2], lines[j][3], x, y, x+dx, y-dy)){
 					//line Vector
 					lv = [lines[j][2] - lines[j][0], lines[j][1] - lines[j][3]];
@@ -133,7 +149,8 @@ function draw(){
 					projlvDir = [dotDiv*lv[0], dotDiv*lv[1]];
 
 					newVec = [2*projlvDir[0] - dx, 2*projlvDir[1] - dy];
-					head[i].dir = Math.atan2(newVec[0],newVec[1]);
+					h.dx = newVec[0];
+					h.dy = newVec[1];
 				}
 			}
 		}
@@ -141,9 +158,12 @@ function draw(){
 
 function resetParticles(x,y){
 	for(i = 0; i < hcount; i++){
-		head[i].x = x;
-		head[i].y = y;
-		head[i].dir = 2*i*Math.PI/hcount;
+		var h = head[i];
+		h.x = x;
+		h.y = y;
+		var dir = 2*i*Math.PI/hcount;
+		h.dx = speed*Math.cos(dir);
+		h.dy = speed*Math.sin(dir);
 	}
 }
 
