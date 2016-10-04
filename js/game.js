@@ -29,7 +29,7 @@ function init(){
 
 	//collision lines, [x1,y1,x2,y2]
 	lines = [[0,30,1400,30], [1370,0,1370,900], [1400,870,0,870], [30,900,30,0], 
-	[0,60,60,0], [1340,0,1400,60], [1400,840,1340,900], [60,900,0,840]];
+	[0,60,60,0], [1340,0,1400,60], [1400,840,1340,900], [60,900,0,840], [100,409,928,401]];
 
 	for(i = 0; i < hcount; i++){
 		var k = 1.0;
@@ -58,7 +58,7 @@ function gameloop(){
 
 function draw(){
 	//blur effect
-	ctx.globalAlpha = 0.1;
+	ctx.globalAlpha = 0.04;
 	ctx.fillStyle="#000000";
 	ctx.fillRect(30, 30, width - 60, height - 60);
 	ctx.globalAlpha = 1;
@@ -67,8 +67,8 @@ function draw(){
 	//ctx.strokeStyle = "#04B431";
 	//ctx.beginPath();
 	//ctx.moveTo(head[0].x, head[0].y);
-	for(i = 1; i < hcount; i++){
-		ctx.fillRect(head[i].x, head[i].y, 2, 2);
+	for(i = 0; i < hcount; i++){
+		ctx.fillRect(head[i].x - 2, head[i].y - 2, 3, 3);
 		//id.data[0] = "46";
 		//id.data[1] = 57;
 		//id.data[2] = 204;
@@ -118,14 +118,29 @@ function draw(){
 }
 
 	function calc(){
+
+		//console.log("before");
+		//console.log(head[1]);
+
 		var TmousePos = mousePos;
 		for(i = 0; i < hcount; i++){
+
 			var h = head[i];
 			var dx = h.dx;
 			var dy = h.dy;
 
 			var x = (h.x += dx);
 			var y = (h.y -= dy);
+
+			//if(h.dy < -2)
+			//	console.log(i);
+
+			if(h.dy > -3)
+				h.dy -= 0.04;
+			
+			if(h.dy > 0.6 || h.dy < -0.6)
+				h.dx *= 0.999;
+
 
 			if(mdown){
 				var vectToM = [TmousePos.x - x, TmousePos.y - y];
@@ -137,11 +152,29 @@ function draw(){
 					h.dy = -vectToM[1]*distDiv;
 				}
 			}
+			//console.log(h.dy);
 			//collisions
+			var sdy = dy;
+			var sy = 0;
+			var k = 0;
+			if(dy < 0 ){
+				if(dy > -2){
+					sdy = dy-2;
+					sy = -2;
+			}
+				k = -1;
+			}
+
 			for(j = 0; j < lines.length; j++){
-				if(line_intersects(lines[j][0], lines[j][1], lines[j][2], lines[j][3], x, y, x+dx, y-dy)){
+				var l = lines[j];
+				
+
+				if(line_intersects(l[0], l[1], l[2], l[3], x, y+sy+k, x+dx, y-sdy)){
+					//console.log('collision! ' + sdy + " " + dy);
+					h.x -= dx;
+					h.y += dy;
 					//line Vector
-					lv = [lines[j][2] - lines[j][0], lines[j][1] - lines[j][3]];
+					lv = [[2] - l[0], l[1] - l[3]];
 					dotlvDir = lv[0]*dx + lv[1]*dy;
 					dotlvlv = lv[0]*lv[0] + lv[1]*lv[1];
 					dotDiv = dotlvDir/dotlvlv;
@@ -149,11 +182,18 @@ function draw(){
 					projlvDir = [dotDiv*lv[0], dotDiv*lv[1]];
 
 					newVec = [2*projlvDir[0] - dx, 2*projlvDir[1] - dy];
-					h.dx = newVec[0];
-					h.dy = newVec[1];
+					h.dx = 1*newVec[0];
+					h.dy = 0.5*newVec[1];
+					if(newVec[1] > -0.6 && newVec[1] < 0.6)
+						h.dx *= 1;
+					//h.x += h.dx;
+					//h.y -= h.dy;
+
 				}
 			}
 		}
+		//console.log("After: ");
+		//console.log(head[1]);
 	}
 
 function resetParticles(x,y){
@@ -164,6 +204,8 @@ function resetParticles(x,y){
 		var dir = 2*i*Math.PI/hcount;
 		h.dx = speed*Math.cos(dir);
 		h.dy = speed*Math.sin(dir);
+		if(h.dy < -3)
+			console.log('wut');
 	}
 }
 
@@ -229,7 +271,9 @@ window.addEventListener('keydown', function(evt) {
 	if(evt.keyCode == 90){
 		if(lines.length > 8)
 			lines.pop();
-	}
+		}
+	if(evt.keyCode == 70)
+		calc();
 }, false);
 
 document.body.addEventListener('contextmenu', function(ev) { ev.preventDefault(); return false; }, false);
