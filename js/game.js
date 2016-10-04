@@ -1,4 +1,4 @@
-﻿var width, height;
+var width, height;
 var head = [], tail = [], col = [];
 var hcount = parseInt(prompt("PARTICLE COUNT? <Default: 10000>")) || 10000;
 var speed = parseFloat(prompt("PARTICLE SPEED? <Default: 3")) || 3;
